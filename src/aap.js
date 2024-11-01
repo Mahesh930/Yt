@@ -8,17 +8,17 @@ const app = express();
 //configuration of cors
 app.use(cors({
     origin: process.env.CORSE_ORIGIN,
-    Credential:true
+    credentials: true
 }))
 
-app.use(express.json({limit:"16kb"}));
+app.use(express.json({ limit: "16kb" }));
 
 app.use(express.urlencoded({
-    extended:true,
-    limit:"16kb"
+    extended: true,
+    limit: "16kb"
 }));
-app.use(express.static("public")); 
+app.use(express.static("public"));
+app.use(cookieParser());
 
 
-
-export{app};
+export { app };
