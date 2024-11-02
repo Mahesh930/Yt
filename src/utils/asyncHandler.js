@@ -1,5 +1,7 @@
 const asyncHandler = (reqHandler) => {
-    (req, res, next) => {
+    // console.log("Enter in asyncHandler ");
+
+    return (req, res, next) => {
         Promise.resolve(reqHandler(req, res, next))
             .catch((err) => next(err))
     }
