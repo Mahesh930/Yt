@@ -48,9 +48,9 @@ const userSchema = new Schema({
         type: String
     }
 },
-{
-    timestamps: true
-});
+    {
+        timestamps: true
+    });
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
@@ -60,7 +60,7 @@ userSchema.pre("save", async function (next) {
     next();
 });
 
-userSchema.methods.comparePassword = async function (password) {
+userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
@@ -86,10 +86,10 @@ userSchema.methods.generateRefreshToken = function () {
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn: process.env.REFREST_TOKEN_EXPIEY
         }
     );
 };
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
-export { User};
+export { User };
