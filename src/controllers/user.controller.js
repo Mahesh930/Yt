@@ -7,6 +7,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
+
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
         // console.log(userId);
@@ -182,8 +183,12 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            // $set: {
+            //     refreshToken: undefined
+            // }
+            $unset: {
+                refreshToken: 1
+                //this removes the field from document
             }
         }, {
         new: true
@@ -258,11 +263,16 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     //     throw new apiError(400, "New password and confirm password does not match..")
     // }
 
-    const user = User.findById(req.user?._id);
+    const user = await User.findById(req.user?._id);
+    // console.log(user);
 
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+    if (!user) {
+        throw new apiError(404, "User not found..")
+    }
 
-    if (!isPasswordCorrect) {
+    const isValidPassword = await user.isPasswordCorrect(oldPassword);
+
+    if (!isValidPassword) {
         throw new apiError(401, "Old password is incorrect..")
     }
 
@@ -281,7 +291,11 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            200, req.user, "Current User fetch successfully.."
+            new ApiResponse(
+                200,
+                req.user,
+                "Current User fetch successfully.."
+            )
         )
 })
 
@@ -295,12 +309,12 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     //     throw new apiError(400, "Email and username are required..")
     // }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
                 fullname,
-                email
+                email: email
                 // username
             }
         },
@@ -403,15 +417,15 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             $lookup: {
                 from: 'subscriptions',
                 localField: '_id',
-                foreginField: "channel",
-                as: "subscriber"
+                foreignField: "channel",
+                as: "subscribers"
             }
         },
         {
             $lookup: {
                 from: 'subscriptions',
                 localField: '_id',
-                foreginField: "subscriber",
+                foreignField: "subscriber",
                 as: "subscribedTo"
             }
         },
@@ -424,7 +438,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                     $size: "$subscribedTo"
                 },
                 isSubscribed: {
-                    $cons: {
+                    $cond: {
                         if: { $in: [req.user?._id, "$subscribers.subscriber"] },
                         then: true,
                         else: false
@@ -506,14 +520,14 @@ const getWathcHistory = asyncHandler(async (req, res) => {
     ])
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(
-            200,
-            user[0].watchHistory,
-            "Watch history fetched successfully"
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user[0].watchHistory,
+                "Watch history fetched successfully"
+            )
         )
-    )
 })
 
 export {
