@@ -1,4 +1,5 @@
-import mongoose, { models, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import models from "mongoose"
 
 const tweetSchema = new Schema({
     content: {

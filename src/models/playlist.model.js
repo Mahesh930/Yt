@@ -1,4 +1,5 @@
-import mongoose, { models, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import models from "mongoose";
 
 const playlistSchema = new Schema({
     name: {
@@ -15,7 +16,7 @@ const playlistSchema = new Schema({
             ref: 'Video'
         }
     ],
-    owner:{
+    owner: {
         type: Schema.Types.ObjectId,
         ref: 'User'
     }

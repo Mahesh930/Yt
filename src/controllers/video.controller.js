@@ -1,7 +1,7 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
-import { ApiError } from "../utils/apiError.js"
+import { apiError} from "../utils/apiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
@@ -13,8 +13,49 @@ const getAllVideos = asyncHandler(async (req, res) => {
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description } = req.body
+    const { title, description, duration } = req.body
     // TODO: get video, upload to cloudinary, create video
+    const videoLocalPath = req.files?.videoFile[0]?.path
+    const thumbnailLocalPath = req.files?.thumbnail[0]?.path
+
+
+    if (!videoLocalPath) {
+        throw new apiError(400, "Video is Missing..")
+    }
+    if (!thumbnailLocalPath) {
+        throw new apiError(400, "Video thumbnail is Missing..")
+    }
+
+    const videoUrl = await uploadOnCloudinary(videoLocalPath);
+    if (!videoUrl.url) {
+        throw new apiError(400, "Failed to Upload video On Cloudinary")
+    }
+    const thumbnailUrl = await uploadOnCloudinary(thumbnailLocalPath);
+    if (!videoUrl.url) {
+        throw new apiError(400, "Failed to Upload video thumbnail On Cloudinary")
+    }
+
+    const video = await Video.create({
+        videoFile: videoUrl,
+        thumbnail: thumbnailUrl,
+        title,
+        description,
+        duration,
+        userId: req.user._id
+    })
+
+    const createdVideo = await Video.findById(video._id);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                createdVideo,
+                "Video Published.."
+            )
+        )
+
 })
 
 const getVideoById = asyncHandler(async (req, res) => {

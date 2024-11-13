@@ -1,8 +1,9 @@
-import mongoose, { models, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import models from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 
-const commentSchema = new Schemma({
+const commentSchema = new Schema({
     content: {
         type: String,
         required: true
