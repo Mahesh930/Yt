@@ -11,7 +11,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
 })
-
+//this function run successfully
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description, duration } = req.body;
 
@@ -61,19 +61,22 @@ const publishAVideo = asyncHandler(async (req, res) => {
     );
 });
 
+//this function run successfully
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
     try {
         // Fetch the video from the database
-        const video = await Video.findById(videoId);
+        const video = await Video.findOne(videoId);
 
         // If video not found, return 404 error
         if (!video) {
-            return res.status(404).json({
-                status: 404,
-                message: "Video not found",
-            });
+            return res
+                .status(404)
+                .json({
+                    status: 404,
+                    message: "Video not found",
+                });
         }
 
         // Return the video if found
@@ -91,56 +94,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     }
 });
 
-// const updateVideo = asyncHandler(async (req, res) => {
-//     // const {  } = req.params
-//     const { title, description, videoId } = req.body
-//     //TODO: update video details like title, description, thumbnail
-//     const video = await Video.findById(videoId)
-//     if (!video) {
-//         throw new apiError(404, "Video Not Found..")
-//     }
-//     // Validate other fields
-//     if (!title || !description) {
-//         throw new apiError(400, "Title and Description are required");
-//     }
-//     // console.log('Files:', req.files);
-//     // console.log('Body:', req.body);
-
-//     const localThumbnailPath = req.files?.thumbnail?.[0]?.path;
-//     if (!localThumbnailPath) {
-//         throw new apiError(400, "Thumbnail is required ");
-//     }
-
-//     // upload thumbnail on cloudinary 
-//     let newThumbnail;
-//     try {
-//         newThumbnail = await uploadOnCloudinary(localThumbnailPath);
-//     } catch (error) {
-//         console.error('Cloudinary Upload Error:', error);
-//         throw new apiError(500, "Thumbnail Upload Failed");
-//     }
-
-//     // update video details
-//     const updatedVideo = await Video.findOneAndUpdate(
-//         { _id: videoId },
-//         {
-//             $set: {
-//                 title: title,
-//                 description: description,
-//                 thumbnail: newThumbnail
-
-//             }
-//         }
-//     )
-//     return res
-//         .status(200)
-//         .json(new ApiResponse(
-//             200,
-//             updatedVideo,
-//             "Video Updated.."
-//         ))
-
-// })
+//this function run successfully
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { title, description } = req.body;
@@ -151,7 +105,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
 
     // Find the video
-    const video = await Video.findById(videoId);
+    const video = await Video.findOne(videoId);
     if (!video) {
         throw new apiError(404, 'Video Not Found');
     }
@@ -164,27 +118,24 @@ const updateVideo = asyncHandler(async (req, res) => {
         throw new apiError(500, 'Thumbnail Upload Failed');
     }
 
+    const updatedVideo = await Video.findOneAndUpdate(
+        { _id: videoId },
+        {
+            $set: {
+                title: title,
+                description: description,
+                thumbnail: newThumbnail.url
 
-    // Update the video details
-    const updatedFields = {
-        title,
-        description,
-        ...(newThumbnail && { thumbnail: newThumbnail }), // Only update thumbnail if provided
-    };
-
-    const updatedVideo = await Video.findByIdAndUpdate(
-        videoId,
-        { $set: updatedFields },
-        { new: true } // Return updated document
-    );
-
+            }
+        }
+    )
+    // console.log(updateVideo);
     return res
-    .status(200)
-    .json(new ApiResponse(
-        200, updatedVideo, 'Video Updated Successfully'
-    ));
+        .status(200)
+        .json(new ApiResponse(
+            200, updatedVideo, 'Video Updated Successfully'
+        ));
 });
-
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
