@@ -8,6 +8,7 @@ const connectDB = async () => {
     );
     // console.log("MongoDB URL:", process.env.MONGODB_URL);
     console.log(`MongoDB Connected: ${connectionInstance.connection.host}`);
+    
   } catch (error) {
     console.log("MongoDB connection error ", error);
   }

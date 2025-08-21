@@ -17,7 +17,8 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
   }
 
   const lvid = await Like.create({ video, likedBy });
-
+  const createdLiked = await Like.findById(lvid._id);
+  console.log("hello");
   return res
     .status(201)
     .json(new ApiResponse(200, { like: lvid }, "Video liked"));
