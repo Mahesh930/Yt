@@ -12,14 +12,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
   if (!videoId) {
     return apiError(res, 400, "Video is required...");
   }
-  
+
   const video = await Video.findById(videoId);
   if (!video) {
     return apiError(res, 404, "Video not found.");
   }
 
   const comments = await Comment.find({ video: video._id })
-    .populate("owner", "username") 
+    .populate("owner", "username")
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
@@ -68,19 +68,36 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
   // TODO: update a comment
-  const { id } = req.params;
-  const content = req.body;
-  const user = req.user._id;
+  const { commentId } = req.params;
+  const { content } = req.body;
 
-  if (!id) {
-    return apiError(res, 400, "Coment id required");
+  if (!content) {
+    throw new apiError(400, "Content is required");
   }
 
-  const oldComment = await Comment.findById({ _id: id });
-  if (oldComment.owner.toString() !== user.toString()) {
-    return apiError(res, 400, "You are not authorized to Update this comment.");
+  const comment = await Comment.findById(commentId);
+
+  if (!comment) {
+    throw new apiError(404, "Comment not found");
   }
-  const newComment = content;
+
+  if (comment.owner.toString() !== req.user?._id.toString()) {
+    throw new apiError(403, "You are not authorized to update this comment");
+  }
+
+  const updatedComment = await Comment.findByIdAndUpdate(
+    commentId,
+    {
+      $set: {
+        content
+      }
+    },
+    { new: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedComment, "Comment updated successfully"));
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
