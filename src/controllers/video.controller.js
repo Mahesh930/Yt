@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js"
 import { apiError } from "../utils/apiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js"
 
 //this function run successfully
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -15,23 +15,23 @@ const getAllVideos = asyncHandler(async (req, res) => {
         const searchQuery = {};
         if (query) searchQuery.title = { $regex: query, $options: 'i' }; // Case-insensitive text search
         if (userId) searchQuery.userId = userId; // Filter by user ID
-    
+
         const skip = (page - 1) * limit;
         const sortOrder = sortType === 'asc' ? 1 : -1;
-    
+
         const videos = await Video.find(searchQuery)
-          .sort({ [sortBy]: sortOrder })
-          .skip(skip)
-          .limit(Number(limit));
-    
+            .sort({ [sortBy]: sortOrder })
+            .skip(skip)
+            .limit(Number(limit));
+
         const totalVideos = await Video.countDocuments(searchQuery);
         res.status(200).json({
-          data: videos,
-          meta: {
-            currentPage: page,
-            totalPages: Math.ceil(totalVideos / limit),
-            totalVideos,
-          },
+            data: videos,
+            meta: {
+                currentPage: page,
+                totalPages: Math.ceil(totalVideos / limit),
+                totalVideos,
+            },
         });
 
         return res.status(200).json(new ApiResponse(200, videos, "All Videos"));
@@ -171,31 +171,61 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: delete video
+
+    if (!isValidObjectId(videoId)) {
+        throw new apiError(400, "Invalid video ID");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new apiError(404, "Video not found");
+    }
+
+    if (video.owner.toString() !== req.user?._id.toString()) {
+        throw new apiError(403, "You are not authorized to delete this video");
+    }
+
+    const videoFileDelete = await deleteFromCloudinary(video.videoFile);
+    const thumbnailDelete = await deleteFromCloudinary(video.thumbnail);
+
     await Video.findByIdAndDelete(videoId);
+
     return res
         .status(200)
         .json(new ApiResponse(
             200,
-            "Video Deleted..",
+            {},
+            "Video Deleted Successfully",
         ))
 });
 
 //this function run successfully
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: toggle publish status of video
+
+    if (!isValidObjectId(videoId)) {
+        throw new apiError(400, "Invalid video ID");
+    }
+
     const video = await Video.findById(videoId);
     if (!video) {
         throw new apiError(404, 'Video Not Found');
     }
+
+    if (video.owner.toString() !== req.user?._id.toString()) {
+        throw new apiError(403, "You are not authorized to update this video");
+    }
+
     video.isPublished = !video.isPublished;
-    await video.save();
+    await video.save({ validateBeforeSave: false });
+
     return res
         .status(200)
         .json(new ApiResponse(
             200,
             video,
-            'Video Publish Status Toggled'
+            'Video Publish Status Toggled Successfully'
         ))
 });
 
